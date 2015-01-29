@@ -1,3 +1,5 @@
+import java.text.DecimalFormat;
+
 import Jama.*;
 
 public class LinearRegression {
@@ -21,22 +23,12 @@ public class LinearRegression {
 
 		}
 
+		/***********************************************************************/
+		// Read the testing file
 		int rowsTest = Integer.parseInt(args[6]);
 		int colsTest = Integer.parseInt(args[7]);
-
-		// Compute E(w) and store weights
-		DataTrainAndTest dataTT = new DataTrainAndTest(rows, cols, rowsTest, colsTest);
-		double MSETrainingSet[] = new double[150];
-		double lambda = 1.;
-		for (int index = 0; index < 150; index++) {
-			MSETrainingSet[index] = dataTT.computeL2Regression(
-					mtFeaturesData, mtOutputVal, rows, cols, lambda);
-			//System.out.println("lambda=" + lambda + " "+ "E_w=" + MSETrainingSet[index]);
-			lambda = lambda + 1;
-		}
 		
-
-		// Read the testing file
+		
 		Read_Parse_InputFile testingFile = new Read_Parse_InputFile(args[4], args[5], args[6], args[7]);
 
 		Matrix mtTestFeaturesData = new Matrix(rowsTest, colsTest);
@@ -46,8 +38,44 @@ public class LinearRegression {
 
 		}
 
-		dataTT.outputPredictor(mtTestFeaturesData);
-		dataTT.diffPredictedActual(mtTestOutputVal);
+		/***********************************************************************/
+		// Compute E(w) and store weights for training data for a choosen lambda
+		// On using weights calculated in previous step calculate MSE for testdata
+		DataTrainAndTest dataTT = new DataTrainAndTest(rows, cols, 
+				rowsTest, colsTest);
+		double MSETrainingSet[] = new double[150];
+		double MSETestingSet[] = new double[150];
+		double lambda = 1.;
+		for (int index = 0; index < 150; index++) {
+			dataTT.computeL2Regression(mtFeaturesData, mtOutputVal, rows, cols, 
+					lambda);
+			MSETrainingSet[index] = dataTT.getMSETrainData(); 
+			
+			//Predict the output values on testdata
+			//Compare it with actual value in testdata
+			//calculate MSE on testdata
+			dataTT.outputPredictor(mtTestFeaturesData);
+			MSETestingSet[index] = dataTT.MSETestData(mtTestOutputVal, rowsTest);
+			
+			/*System.out.println("lambda=" + lambda + " "+  
+			MSETrainingSet[index] + " " + MSETestingSet[index]);*/
+			lambda = lambda + 1;
+		}
+		WriteToFile objwtof = new WriteToFile();
+		objwtof.writeMSEToFile(args[0], args[4], MSETrainingSet, MSETestingSet);
+		
+/*		DecimalFormat decFormat = new DecimalFormat("#.######");
+		for (int index = 0; index < 150; index++){
+			System.out.print(decFormat.format(MSETrainingSet[index]) +",");
+		}
+		
+		for (int index = 0; index < 150; index++){
+			System.out.print(decFormat.format(MSETestingSet[index]) +",");
+		}*/
+
+
+
+
 
 		/*
 		 * SplitCsvFile splitFile = new SplitCsvFile(); try {
@@ -60,7 +88,7 @@ public class LinearRegression {
 		 * // TODO Auto-generated catch block e.printStackTrace(); }
 		 */
 		
-		CrossValidation cv = new CrossValidation();
-		cv.splitDataToKFolds(mtFeaturesData, mtOutputVal, rows, cols, 5);
+/*		CrossValidation cv = new CrossValidation();
+		cv.splitDataToKFolds(mtFeaturesData, mtOutputVal, rows, cols, 5);*/
 	}
 }

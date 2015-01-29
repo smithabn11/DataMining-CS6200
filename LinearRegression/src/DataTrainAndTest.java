@@ -3,33 +3,38 @@ import java.text.DecimalFormat;
 import Jama.*;
 
 public class DataTrainAndTest {
-	
-	//stores the weight in cols*1 Matrix
+
+	// stores the weight in cols*1 Matrix
 	private Matrix mtWeigths;
-	
+	// stores MSE for a row in Training data
+	private double dMSETrainData;
 	private DecimalFormat decFormat;
-	
-	//stores the predicted output on test data
-	//using mtWeigths
+
+	// stores the predicted output on test data
+	// using mtWeigths
 	private Matrix mtOutputPredicted;
-	
+
 	private Matrix mtDiffPredictedActual;
-	
-	public DataTrainAndTest(int rowsTrain, int colsTrain, 
-			int rowsTest, int colsTest){
-		mtWeigths = new Matrix(colsTrain,1);
+
+	public DataTrainAndTest(int rowsTrain, int colsTrain, int rowsTest, int colsTest) {
+		mtWeigths = new Matrix(colsTrain, 1);
 		mtOutputPredicted = new Matrix(rowsTest, 1);
 		mtDiffPredictedActual = new Matrix(rowsTest, 1);
 		decFormat = new DecimalFormat("#.######");
+		dMSETrainData = 0;
 	}
-	
-	public Matrix getWeigths(){
+
+	public double getMSETrainData() {
+		return dMSETrainData;
+	}
+
+	public Matrix getWeigths() {
 		return mtWeigths;
 	}
 
 	public double computeL2Regression(Matrix mtFeaturesData, Matrix mtOutputVal, int rows, int cols, double lambda) {
 
-		//double lambda = 5.;
+		// double lambda = 5.;
 		// print(NumberFormat format, int width)
 		// mtFeaturesData.print(decFormat, 1);
 		// mtOutputVal.print(decFormat, 1);
@@ -70,11 +75,11 @@ public class DataTrainAndTest {
 		// After this step mtPartialResult has Weights stored
 		mtPartialResult = mtPartialResult.times(mtFD_Transpose);
 		mtPartialResult = mtPartialResult.times(mtOutputVal);
-		
-		//Copy and store the weights in cols*1
+
+		// Copy and store the weights in cols*1
 		mtWeigths = mtPartialResult.copy();
-		//mtWeigths.print(decFormat, 1);
-		
+		// mtWeigths.print(decFormat, 1);
+
 		// Compute w(transpose)*w
 		// store in mtWeigthsMagintude
 		Matrix mtWeightsTranspose = new Matrix(mtPartialResult.getColumnDimension(), mtPartialResult.getRowDimension());
@@ -110,28 +115,46 @@ public class DataTrainAndTest {
 			dpartialSum += Math.pow((temp.get(0, 0)), 2);
 
 		}
-		// Take the average i.e divide by N
+		// Take the average i.e divide by N => MSE on train data
 		dpartialSum = dpartialSum / inputRows;
 
-		//System.out.println(dpartialSum + " " + dlambdaWeigthsMagnitude);
+		dMSETrainData = dpartialSum;
+
+		// System.out.println(dpartialSum + " " + dlambdaWeigthsMagnitude);
 
 		// Now final compute E(w) = (1/N)*SumOfAll[(X(i)w - Y(i))square]
 		return (dpartialSum + dlambdaWeigthsMagnitude);
-		
+
 	}
-	
-	public void outputPredictor(Matrix mtTestData){
-		mtOutputPredicted = mtTestData.times(mtWeigths);			
+
+	public void outputPredictor(Matrix mtTestData) {
+		mtOutputPredicted = mtTestData.times(mtWeigths);
 	}
-	
-	public void diffPredictedActual(Matrix mtActualOutput){
-		mtDiffPredictedActual = mtActualOutput.minus(mtOutputPredicted); 
-		
-		WriteToFile objwtof = new WriteToFile();
-		objwtof.writeMatrixToFile("./mtActualOutput.txt", mtActualOutput);
-		objwtof.writeMatrixToFile("./mtOutputPredicted.txt", mtOutputPredicted);
-		objwtof.writeMatrixToFile("./mtDiffPredictedActual.txt", mtDiffPredictedActual);
+
+	public void diffPredictedActual(Matrix mtActualOutput) {
+		mtDiffPredictedActual = mtActualOutput.minus(mtOutputPredicted);
+
+		/*
+		 * WriteToFile objwtof = new WriteToFile();
+		 * objwtof.writeMatrixToFile("./mtActualOutput.txt", mtActualOutput);
+		 * objwtof.writeMatrixToFile("./mtOutputPredicted.txt",
+		 * mtOutputPredicted);
+		 * objwtof.writeMatrixToFile("./mtDiffPredictedActual.txt",
+		 * mtDiffPredictedActual);
+		 */
 	}
-	
-	
+
+	public double MSETestData(Matrix mtActualOutput, int rows) {
+		// First calculate the difference between actual and predicted
+		diffPredictedActual(mtActualOutput);
+
+		// Calculate the mean square error = (1/N)SumOfAll(actual - predicted)
+		double mse = 0.;
+		for (int index = 0; index < rows; index++) {
+			mse += mtDiffPredictedActual.get(index, 0);
+		}
+		//System.out.println(mse / rows);
+		return (mse / rows);
+	}
+
 }

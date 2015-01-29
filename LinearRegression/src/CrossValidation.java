@@ -14,10 +14,12 @@ public class CrossValidation {
 		int numOfChunks = (rows / foldVal);
 		int rowFetchStart = 0;
 		int rowFetchEnd = (numOfChunks - 1);
+		
 
 		Matrix testData = new Matrix(numOfChunks, cols);
 		Matrix testOutput = new Matrix(numOfChunks, 1);
 		DecimalFormat decFormat = new DecimalFormat("#.######");
+		//mtFeaturesData.print(decFormat, 1);
 
 		for (int index = 0; (index < foldVal); index++) {
 			// System.out.println(rowFetchStart + " " + rowFetchEnd);
@@ -25,6 +27,7 @@ public class CrossValidation {
 			// This gives the test set
 			testData = mtFeaturesData.getMatrix(rowFetchStart, rowFetchEnd, 0, (cols - 1));
 			testOutput = mtOutputValue.getMatrix(rowFetchStart, rowFetchEnd, 0, 0);
+			testData.print(decFormat, 1);
 			rowFetchStart = rowFetchEnd + 1;
 			rowFetchEnd = rowFetchEnd + numOfChunks;
 
@@ -38,7 +41,7 @@ public class CrossValidation {
 			// 100 rows 0-19 is given to testData
 			// give 20-99 to trainData
 			if (index == 0) {
-				trainData = mtFeaturesData.getMatrix(rowFetchStart, (rows - 1), 0, (cols - 1));
+				trainData = (mtFeaturesData.getMatrix(rowFetchStart, (rows - 1), 0, (cols - 1)));
 			}
 			//Case2 - Ending
 			// 100 rows 80-99 is given to testData
