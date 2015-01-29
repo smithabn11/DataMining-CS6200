@@ -27,9 +27,9 @@ public class DataTrainAndTest {
 		return mtWeigths;
 	}
 
-	public void computeL2Regression(Matrix mtFeaturesData, Matrix mtOutputVal, int rows, int cols) {
+	public double computeL2Regression(Matrix mtFeaturesData, Matrix mtOutputVal, int rows, int cols, double lambda) {
 
-		double lambda = 5.;
+		//double lambda = 5.;
 		// print(NumberFormat format, int width)
 		// mtFeaturesData.print(decFormat, 1);
 		// mtOutputVal.print(decFormat, 1);
@@ -116,8 +116,8 @@ public class DataTrainAndTest {
 		//System.out.println(dpartialSum + " " + dlambdaWeigthsMagnitude);
 
 		// Now final compute E(w) = (1/N)*SumOfAll[(X(i)w - Y(i))square]
-		double dE_w = dpartialSum + dlambdaWeigthsMagnitude;
-		System.out.println(dE_w);
+		return (dpartialSum + dlambdaWeigthsMagnitude);
+		
 	}
 	
 	public void outputPredictor(Matrix mtTestData){
