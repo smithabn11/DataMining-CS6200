@@ -109,9 +109,16 @@ public class LinearRegression {
 			objwtof.writeLearingCurveRFile(args[0], lambdaFixed, MSETrainLC, MSETestLC);
 		}
 
-		
-		 CrossValidation cv = new CrossValidation(rows, cols, 5);
+		/***********************************************************************/
+		// Q3 - Cross Validation
+		if (args.length > 8 && args[8].equalsIgnoreCase("Q3")) {
+			
+			int foldVal = 5;
+			if (args.length == 10) {
+				foldVal = Integer.parseInt(args[9]);
+			}
+		 CrossValidation cv = new CrossValidation(rows, cols, foldVal);
 		 cv.splitDataToKFolds(mtFeaturesData, mtOutputVal);
-		 
+		}		 
 	}
 }

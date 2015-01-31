@@ -15,8 +15,8 @@ public class WriteToFile {
 		decFormat = new DecimalFormat("#.######");
 	}
 
-	/* EXAMPLE:
-	 * WriteToFile objwtof = new WriteToFile();
+	/*
+	 * EXAMPLE: WriteToFile objwtof = new WriteToFile();
 	 * objwtof.writeMatrixToFile("./mtActualOutput.txt", mtActualOutput);
 	 */
 	public void writeMatrixToFile(String opfilename, Matrix mtData) {
@@ -56,13 +56,12 @@ public class WriteToFile {
 				temp1 = trainfn.substring(2, trainfn.lastIndexOf('.'));
 			}
 
-			String temp2 =testfn;
+			String temp2 = testfn;
 			if (testfn.startsWith("./")) {
 				temp2 = testfn.substring(2, testfn.lastIndexOf('.'));
 			}
 			String opFileName = "./MSE_".concat(temp1).concat("_").concat(temp2).concat(".R");
 
-			
 			file = new File(opFileName);
 			// if file does not exists, then create it
 			if (!file.exists()) {
@@ -74,10 +73,10 @@ public class WriteToFile {
 			printstr.println("jpeg(\"C:/graph.jpg\")");
 
 			DecimalFormat decFormat = new DecimalFormat("#.######");
-			
-			printstr.println("lambda<-0:"+Double.toString(dTrainData.length - 1)+"");
+
+			printstr.println("lambda<-0:" + Double.toString(dTrainData.length - 1) + "");
 			printstr.print("traindata<-c(");
-			
+
 			int Trainrows = dTrainData.length;
 			for (int index = 0; index < (Trainrows - 1); index++) {
 				printstr.print(decFormat.format(dTrainData[index]) + ",");
@@ -85,32 +84,32 @@ public class WriteToFile {
 			printstr.print(decFormat.format(dTrainData[(Trainrows - 1)]) + ")");
 			printstr.println("");
 			printstr.print("testdata<-c(");
-			
+
 			int Testrows = dTestData.length;
 			for (int index = 0; index < (Testrows - 1); index++) {
 				printstr.print(decFormat.format(dTestData[index]) + ",");
 			}
 			printstr.print(decFormat.format(dTestData[(Testrows - 1)]) + ")");
 			printstr.println("");
-			
-			/*Find the range for ylim (as we have to plot 2 curves */
+
+			/* Find the range for ylim (as we have to plot 2 curves */
 			Arrays.sort(dTrainData);
 			double ylimMin = dTrainData[0];
 			double ylimMax = dTrainData[(dTrainData.length - 1)];
 			Arrays.sort(dTestData);
-			if(dTestData[0] < ylimMin){
+			if (dTestData[0] < ylimMin) {
 				ylimMin = dTestData[0];
 			}
-			if(dTestData[(dTestData.length - 1)] > ylimMax){
+			if (dTestData[(dTestData.length - 1)] > ylimMax) {
 				ylimMax = dTestData[(dTestData.length - 1)];
 			}
-			
-			printstr.println("plot(lambda,traindata,type=\"l\",col=\"red\","
-					+ "ylab=\"MSE\",axes=FALSE,"
-					+ "ylim=c("+Double.toString(ylimMin)+","+Double.toString(ylimMax)+"))");
+
+			printstr.println("plot(lambda,traindata,type=\"l\",col=\"red\"," + "ylab=\"MSE\"," + "ylim=c("
+					+ decFormat.format(ylimMin) + "," + decFormat.format(ylimMax) + "))");
 			printstr.println("par(new=TRUE)");
 			printstr.println("plot(lambda,testdata,type=\"l\",col=\"green\","
-					+ "ylab=\"MSE\",sub=\"Red=Training Green=Test\")");
+					+ "ylab=\"MSE\",sub=\"Red=Training Green=Test\"," + "ylim=c(" + decFormat.format(ylimMin) + ","
+					+ decFormat.format(ylimMax) + "))");
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -122,8 +121,8 @@ public class WriteToFile {
 
 		}
 	}
-	
-	/* Function to write Learning Curve to R file*/
+
+	/* Function to write Learning Curve to R file */
 	public void writeLearingCurveRFile(String trainfn, double lambda, double dTrainData[], double dTestData[]) {
 		PrintStream printstr = null;
 		File file;
@@ -138,7 +137,6 @@ public class WriteToFile {
 
 			String opFileName = "./LearningCurve_".concat(temp1).concat("_").concat(temp2).concat(".R");
 
-			
 			file = new File(opFileName);
 			// if file does not exists, then create it
 			if (!file.exists()) {
@@ -151,33 +149,44 @@ public class WriteToFile {
 
 			DecimalFormat decFormat = new DecimalFormat("#.######");
 			int boundary = dTrainData.length * 10 + 10;
-			printstr.println("dataSize<-seq(20,"+ Integer.toString(boundary) + ",10)");
-			
-			printstr.print("traindata<-c(");			
+			printstr.println("dataSize<-seq(20," + Integer.toString(boundary) + ",10)");
+
+			printstr.print("traindata<-c(");
 			int Trainrows = dTrainData.length;
 			for (int index = 0; index < (Trainrows - 1); index++) {
 				printstr.print(decFormat.format(dTrainData[index]) + ",");
 			}
-			/*Last item should not contain , but should end with )*/
+			/* Last item should not contain , but should end with ) */
 			printstr.print(decFormat.format(dTrainData[(Trainrows - 1)]) + ")");
 			printstr.println("");
-			
-			
+
 			printstr.print("testdata<-c(");
 			int Testrows = dTestData.length;
 			for (int index = 0; index < (Testrows - 1); index++) {
 				printstr.print(decFormat.format(dTestData[index]) + ",");
 			}
-			/*Last item should not contain , but should end with )*/
+			/* Last item should not contain , but should end with ) */
 			printstr.print(decFormat.format(dTestData[(Testrows - 1)]) + ")");
 			
-			
+			/* Find the range for ylim (as we have to plot 2 curves */
+			Arrays.sort(dTrainData);
+			double ylimMin = dTrainData[0];
+			double ylimMax = dTrainData[(dTrainData.length - 1)];
+			Arrays.sort(dTestData);
+			if (dTestData[0] < ylimMin) {
+				ylimMin = dTestData[0];
+			}
+			if (dTestData[(dTestData.length - 1)] > ylimMax) {
+				ylimMax = dTestData[(dTestData.length - 1)];
+			}
+
 			printstr.println("");
-			printstr.println("plot(dataSize,traindata,type=\"l\",col=\"red\","
-					+ "ylab=\"Ein\",axes=FALSE)");
+			printstr.println("plot(dataSize,traindata,type=\"l\",col=\"red\"," + "ylab=\"Ein\"," + "ylim=c(" + decFormat.format(ylimMin) + ","
+					+ decFormat.format(ylimMax) + "))");
 			printstr.println("par(new=TRUE)");
 			printstr.println("plot(dataSize,testdata,type=\"l\",col=\"green\","
-					+ "ylab=\"Eout\",sub=\"Red=Training Green=Test\")");
+					+ "ylab=\"Eout\",sub=\"Red=Training Green=Test\"," + "ylim=c(" + decFormat.format(ylimMin) + ","
+					+ decFormat.format(ylimMax) + "))");
 
 		} catch (IOException e) {
 			e.printStackTrace();

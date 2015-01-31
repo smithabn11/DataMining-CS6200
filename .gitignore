@@ -43,3 +43,7 @@ Temporary Items
 .apdisk
 .MetaData
 HelloWorld
+GraphAlgorithms
+*.class
+*.zip
+*.R
