@@ -1,5 +1,3 @@
-import java.text.DecimalFormat;
-
 import Jama.*;
 
 public class LinearRegression {
@@ -27,8 +25,7 @@ public class LinearRegression {
 		// Read the testing file
 		int rowsTest = Integer.parseInt(args[6]);
 		int colsTest = Integer.parseInt(args[7]);
-		
-		
+
 		Read_Parse_InputFile testingFile = new Read_Parse_InputFile(args[4], args[5], args[6], args[7]);
 
 		Matrix mtTestFeaturesData = new Matrix(rowsTest, colsTest);
@@ -39,56 +36,82 @@ public class LinearRegression {
 		}
 
 		/***********************************************************************/
-		// Compute E(w) and store weights for training data for a choosen lambda
-		// On using weights calculated in previous step calculate MSE for testdata
-		DataTrainAndTest dataTT = new DataTrainAndTest(rows, cols, 
-				rowsTest, colsTest);
-		double MSETrainingSet[] = new double[150];
-		double MSETestingSet[] = new double[150];
-		double lambda = 1.;
-		for (int index = 0; index < 150; index++) {
-			dataTT.computeL2Regression(mtFeaturesData, mtOutputVal, rows, cols, 
-					lambda);
-			MSETrainingSet[index] = dataTT.getMSETrainData(); 
-			
-			//Predict the output values on testdata
-			//Compare it with actual value in testdata
-			//calculate MSE on testdata
-			dataTT.outputPredictor(mtTestFeaturesData);
-			MSETestingSet[index] = dataTT.MSETestData(mtTestOutputVal, rowsTest);
-			
-			/*System.out.println("lambda=" + lambda + " "+  
-			MSETrainingSet[index] + " " + MSETestingSet[index]);*/
+		/*
+		 * Q1 - Compute MSE for training and test data for lambda 0-150 Compute
+		 * MSE and store weights for training data for a chosen lambda On using
+		 * weights calculated in previous step calculate MSE for testdata
+		 */
+		DataTrainAndTest dataTT = new DataTrainAndTest(cols);
+		double MSETrainingSet[] = new double[151];
+		double MSETestingSet[] = new double[151];
+		double lambda = 0.;
+		for (int index = 0; index <= 150; index++) {
+
+			// Compute Training data MSE
+			MSETrainingSet[index] = dataTT.computeTrainDataMSE(mtFeaturesData, mtOutputVal, rows, cols, lambda);
+
+			/*
+			 * Predict the output values on testdata. Compare it with actual
+			 * value in testdata. Calculate MSE on testdata
+			 */
+			MSETestingSet[index] = dataTT.computeTestDataMSE(mtTestFeaturesData, mtTestOutputVal, rowsTest);
+
 			lambda = lambda + 1;
 		}
+
+		/* Write the results to R file to plot the graph */
 		WriteToFile objwtof = new WriteToFile();
-		objwtof.writeMSEToFile(args[0], args[4], MSETrainingSet, MSETestingSet);
-		
-/*		DecimalFormat decFormat = new DecimalFormat("#.######");
-		for (int index = 0; index < 150; index++){
-			System.out.print(decFormat.format(MSETrainingSet[index]) +",");
+		objwtof.writeMSEToRFile(args[0], args[4], MSETrainingSet, MSETestingSet);
+
+		/***********************************************************************/
+		// Q2 - Plot Learning Curve
+		if (args.length > 8 && args[8].equalsIgnoreCase("Q2")) {
+
+			double lambdaFixed = 1;
+			if (args.length == 10) {
+				lambdaFixed = Double.parseDouble(args[9]);
+			}
+			/* Used for Matrix access of cols */
+			int inputCols = cols;
+			int ITERATIONS = 80;
+			int NUM_TO_SMOOTH = 25;
+			int INCREASE_INPUT_DATA = 10;
+
+			/* Start with size 20 on train data */
+			/* Increment it every time by adding 10 more data points */
+			int inputRows = 20;
+			double MSETrainLC[] = new double[ITERATIONS];
+			double MSETestLC[] = new double[ITERATIONS];
+
+			for (int loop = 0; (loop < ITERATIONS) && (inputRows < rows); loop++) {
+
+				Matrix mtTrainData = new Matrix(inputRows, inputCols);
+				Matrix mtTrainOpVal = new Matrix(inputRows, 1);
+				mtTrainData = mtFeaturesData.getMatrix(0, inputRows, 0, (inputCols - 1));
+				mtTrainOpVal = mtOutputVal.getMatrix(0, inputRows, 0, 0);
+				// objwtof.writeMatrixToFile("./output.txt", mtTrainData);
+				// To get smooth Learning curve run each input 10 times
+				double train_sum = 0.;
+				double test_sum = 0.;
+				DataTrainAndTest obj = new DataTrainAndTest(inputCols);
+				for (int index = 0; index < NUM_TO_SMOOTH; index++) {
+
+					train_sum += obj.computeTrainDataMSE(mtTrainData, mtTrainOpVal, 
+							inputRows, inputCols, lambdaFixed);
+					test_sum += obj.computeTestDataMSE(mtTestFeaturesData, mtTestOutputVal, 
+							rowsTest);
+
+				}
+				MSETrainLC[loop] = train_sum / NUM_TO_SMOOTH;
+				MSETestLC[loop] = test_sum / NUM_TO_SMOOTH;
+				inputRows = inputRows + INCREASE_INPUT_DATA;
+			}
+			objwtof.writeLearingCurveRFile(args[0], lambdaFixed, MSETrainLC, MSETestLC);
 		}
+
 		
-		for (int index = 0; index < 150; index++){
-			System.out.print(decFormat.format(MSETestingSet[index]) +",");
-		}*/
-
-
-
-
-
-		/*
-		 * SplitCsvFile splitFile = new SplitCsvFile(); try {
-		 * splitFile.splitCsvFile("./train-1000-100.csv",
-		 * "./50(1000)_100_train.csv", 50);
-		 * splitFile.splitCsvFile("./train-1000-100.csv",
-		 * "./100(1000)_100_train.csv", 50);
-		 * splitFile.splitCsvFile("./train-1000-100.csv",
-		 * "./150(1000)_100_train.csv", 50); } catch (FileNotFoundException e) {
-		 * // TODO Auto-generated catch block e.printStackTrace(); }
-		 */
-		
-/*		CrossValidation cv = new CrossValidation();
-		cv.splitDataToKFolds(mtFeaturesData, mtOutputVal, rows, cols, 5);*/
+		 CrossValidation cv = new CrossValidation(rows, cols, 5);
+		 cv.splitDataToKFolds(mtFeaturesData, mtOutputVal);
+		 
 	}
 }

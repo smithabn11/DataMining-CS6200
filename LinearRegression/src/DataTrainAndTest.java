@@ -6,35 +6,20 @@ public class DataTrainAndTest {
 
 	// stores the weight in cols*1 Matrix
 	private Matrix mtWeigths;
-	// stores MSE for a row in Training data
-	private double dMSETrainData;
+
+	/*Used to format decimal places*/
 	private DecimalFormat decFormat;
 
-	// stores the predicted output on test data
-	// using mtWeigths
-	private Matrix mtOutputPredicted;
 
-	private Matrix mtDiffPredictedActual;
-
-	public DataTrainAndTest(int rowsTrain, int colsTrain, int rowsTest, int colsTest) {
+	public DataTrainAndTest(int colsTrain) {
 		mtWeigths = new Matrix(colsTrain, 1);
-		mtOutputPredicted = new Matrix(rowsTest, 1);
-		mtDiffPredictedActual = new Matrix(rowsTest, 1);
 		decFormat = new DecimalFormat("#.######");
-		dMSETrainData = 0;
 	}
 
-	public double getMSETrainData() {
-		return dMSETrainData;
-	}
 
-	public Matrix getWeigths() {
-		return mtWeigths;
-	}
+	public double computeTrainDataMSE(Matrix mtFeaturesData, Matrix mtOutputVal, int rows, int cols, double lambda) {
 
-	public double computeL2Regression(Matrix mtFeaturesData, Matrix mtOutputVal, int rows, int cols, double lambda) {
 
-		// double lambda = 5.;
 		// print(NumberFormat format, int width)
 		// mtFeaturesData.print(decFormat, 1);
 		// mtOutputVal.print(decFormat, 1);
@@ -54,10 +39,10 @@ public class DataTrainAndTest {
 		// Find the identity matrix of size [cols][cols]
 		// and store it in the mtPartialResult
 		Matrix mtPartialResult = new Matrix(cols, cols);
-		mtPartialResult = mtPartialResult.identity(cols, cols);
+		mtPartialResult = Matrix.identity(cols, cols);
 		// mtPartialResult.print(decFormat, 1);
 
-		// Multiply lamba with identity matrix
+		// Multiply lambda with identity matrix
 		mtPartialResult = mtPartialResult.times(lambda);
 		// mtPartialResult.print(decFormat, 1);
 
@@ -80,22 +65,7 @@ public class DataTrainAndTest {
 		mtWeigths = mtPartialResult.copy();
 		// mtWeigths.print(decFormat, 1);
 
-		// Compute w(transpose)*w
-		// store in mtWeigthsMagintude
-		Matrix mtWeightsTranspose = new Matrix(mtPartialResult.getColumnDimension(), mtPartialResult.getRowDimension());
-		// Compute w(transpose)
-		mtWeightsTranspose = mtPartialResult.transpose();
-
-		Matrix mtWeigthsMagnitude = new Matrix(mtWeightsTranspose.getRowDimension(),
-				mtPartialResult.getColumnDimension());
-
-		mtWeigthsMagnitude = mtWeightsTranspose.times(mtPartialResult);
-
-		// Multiply mtWeigthsMagnitude by lambda
-		// store the result in mtWeigthsMagnitude
-		double dlambdaWeigthsMagnitude = lambda * mtWeigthsMagnitude.get(0, 0);
-
-		// Calculate 1/2(||Xw - y||) = (1/N)*SumOfAll[(X(i)w - Y(i))square]
+		// Calculate 1/N(||Xw - y||) = (1/N)*SumOfAll[(X(i)w - Y(i))square]
 		double dpartialSum = 0.;
 		int inputRows = mtFeaturesData.getRowDimension();
 		// Array starts from 0 Ex. 0:99
@@ -105,7 +75,7 @@ public class DataTrainAndTest {
 			// First extract each X(i) (i.e each row)
 			temp = mtFeaturesData.getMatrix(index, index, 0, inputCols);
 			// Matrix Multiply X(i) with w
-			temp = temp.times(mtPartialResult);
+			temp = temp.times(mtWeigths);
 
 			// Subtract X(i)w - y(i)
 			// Extract individual row of mtOutputVal(it has only one column)
@@ -118,43 +88,31 @@ public class DataTrainAndTest {
 		// Take the average i.e divide by N => MSE on train data
 		dpartialSum = dpartialSum / inputRows;
 
-		dMSETrainData = dpartialSum;
 
-		// System.out.println(dpartialSum + " " + dlambdaWeigthsMagnitude);
-
-		// Now final compute E(w) = (1/N)*SumOfAll[(X(i)w - Y(i))square]
-		return (dpartialSum + dlambdaWeigthsMagnitude);
+		// Now final compute MSE = (1/N)*SumOfAll[(X(i)w - Y(i))square]
+		return (dpartialSum);
 
 	}
 
-	public void outputPredictor(Matrix mtTestData) {
+
+	public double computeTestDataMSE(Matrix mtTestData, Matrix mtActualOutput, int rowsTest) {
+		
+		//Calculate the predicted output using weights calculated  
+		//from training data
+		Matrix mtOutputPredicted = new Matrix(rowsTest, 1);
 		mtOutputPredicted = mtTestData.times(mtWeigths);
-	}
-
-	public void diffPredictedActual(Matrix mtActualOutput) {
+		
+		// calculate the difference between actual and predicted
+		Matrix mtDiffPredictedActual = new Matrix(rowsTest, 1);
 		mtDiffPredictedActual = mtActualOutput.minus(mtOutputPredicted);
 
-		/*
-		 * WriteToFile objwtof = new WriteToFile();
-		 * objwtof.writeMatrixToFile("./mtActualOutput.txt", mtActualOutput);
-		 * objwtof.writeMatrixToFile("./mtOutputPredicted.txt",
-		 * mtOutputPredicted);
-		 * objwtof.writeMatrixToFile("./mtDiffPredictedActual.txt",
-		 * mtDiffPredictedActual);
-		 */
-	}
-
-	public double MSETestData(Matrix mtActualOutput, int rows) {
-		// First calculate the difference between actual and predicted
-		diffPredictedActual(mtActualOutput);
-
-		// Calculate the mean square error = (1/N)SumOfAll(actual - predicted)
+		// Calculate the mean square error = (1/N)*SumOfAll[(actual - predicted)square]
 		double mse = 0.;
-		for (int index = 0; index < rows; index++) {
-			mse += mtDiffPredictedActual.get(index, 0);
+		for (int index = 0; index < rowsTest; index++) {
+			mse += Math.pow((mtDiffPredictedActual.get(index, 0)),2);
 		}
-		//System.out.println(mse / rows);
-		return (mse / rows);
+
+		return (mse / rowsTest);
 	}
 
 }
