@@ -107,8 +107,8 @@ public class WriteToFile {
 			printstr.println("plot(lambda,traindata,type=\"l\",col=\"red\"," + "ylab=\"MSE\"," + "ylim=c("
 					+ decFormat.format(ylimMin) + "," + decFormat.format(ylimMax) + "))");
 			printstr.println("par(new=TRUE)");
-			printstr.println("plot(lambda,testdata,type=\"l\",col=\"green\","
-					+ "ylab=\"MSE\",sub=\"Red=Training Green=Test\"," + "ylim=c(" + decFormat.format(ylimMin) + ","
+			printstr.println("plot(lambda,testdata,type=\"l\",col=\"blue\","
+					+ "ylab=\"MSE\",sub=\"Red=Training Blue=Test\"," + "ylim=c(" + decFormat.format(ylimMin) + ","
 					+ decFormat.format(ylimMax) + "))");
 
 		} catch (IOException e) {
@@ -184,8 +184,8 @@ public class WriteToFile {
 			printstr.println("plot(dataSize,traindata,type=\"l\",col=\"red\"," + "ylab=\"Ein\"," + "ylim=c(" + decFormat.format(ylimMin) + ","
 					+ decFormat.format(ylimMax) + "))");
 			printstr.println("par(new=TRUE)");
-			printstr.println("plot(dataSize,testdata,type=\"l\",col=\"green\","
-					+ "ylab=\"Eout\",sub=\"Red=Training Green=Test\"," + "ylim=c(" + decFormat.format(ylimMin) + ","
+			printstr.println("plot(dataSize,testdata,type=\"l\",col=\"blue\","
+					+ "ylab=\"Eout\",sub=\"Red=Training Blue=Test\"," + "ylim=c(" + decFormat.format(ylimMin) + ","
 					+ decFormat.format(ylimMax) + "))");
 
 		} catch (IOException e) {
