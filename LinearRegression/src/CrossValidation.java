@@ -1,5 +1,3 @@
-import java.text.DecimalFormat;
-
 import Jama.*;
 
 public class CrossValidation {
@@ -21,100 +19,111 @@ public class CrossValidation {
 	// and output value we need to divide each rpt.
 	// Set aside each chunk for testing and perform
 	// training on rest of the chunks.
-	public void splitDataToKFolds(Matrix mtFeaturesData, Matrix mtOutputValue) {
+	public void splitDataToKFolds(Matrix mtTrainingData, Matrix mtTrainingOpVal, String ipFname) {
 
-		int rowFetchStart = 0;
-		int rowFetchEnd = (numOfChunks - 1);
+		Matrix testDataCV = new Matrix(numOfChunks, cols);
+		Matrix testOutputCV = new Matrix(numOfChunks, 1);
 
-		Matrix testData = new Matrix(numOfChunks, cols);
-		Matrix testOutput = new Matrix(numOfChunks, 1);
+		Matrix trainDataCV = new Matrix(rows - numOfChunks, cols);
+		Matrix trainOutputCV = new Matrix(rows - numOfChunks, 1);
 
-		Matrix trainData = new Matrix(rows - numOfChunks, cols);
-		Matrix trainOutput = new Matrix(rows - numOfChunks, 1);
-
-		int RANGE_LAMBDA_VAL = 10;
 		/* Get best lambda out of this */
-		double MSETrainingSet[][] = new double[foldVal][RANGE_LAMBDA_VAL];
-		double MSETestingSet[][] = new double[foldVal][RANGE_LAMBDA_VAL];
+		int RANGE_LAMBDA_VAL = 10;
+		
+		double MSETrainingSet[] = new double[foldVal];
+		double MSETestingSet[] = new double[foldVal];
+		double CV_lambda[] = new double[RANGE_LAMBDA_VAL];
 
-		DecimalFormat decFormat = new DecimalFormat("#.######");
+		/*Begin with lambda value = 1.0 and continue up to RANGE_LAMBDA_VAL*/
+		double lambda = 1.;
+		for (int counter = 0; counter < RANGE_LAMBDA_VAL; counter++) {
+			
+			/* Initialization */
+			CV_lambda[counter] = 0.;
+			int rowFetchStart = 0;
+			int rowFetchEnd = (numOfChunks - 1);
 
-		/* Iterate foldVal times */
-		for (int index = 0; (index < foldVal); index++) {
-			// This gives the test set
-			testData = mtFeaturesData.getMatrix(rowFetchStart, rowFetchEnd, 0, (cols - 1));
-			testOutput = mtOutputValue.getMatrix(rowFetchStart, rowFetchEnd, 0, 0);
-			// testData.print(decFormat, 1);
-			rowFetchStart = rowFetchEnd + 1;
-			rowFetchEnd = rowFetchEnd + numOfChunks;
+			/* Iterate foldVal times */
+			for (int index = 0; (index < foldVal); index++) {
 
-			// This gives the training set
-			fillTrainData(mtFeaturesData, mtOutputValue, trainData, trainOutput, rowFetchStart, index);
+				// This gives the test set (i.e index th fold)
+				testDataCV = mtTrainingData.getMatrix(rowFetchStart, rowFetchEnd, 0, (cols - 1));
+				testOutputCV = mtTrainingOpVal.getMatrix(rowFetchStart, rowFetchEnd, 0, 0);
 
-			DataTrainAndTest dataTT = new DataTrainAndTest(cols);
+				/*
+				 * Update the rowFetchStart and rowFetchEnd to fetch training data
+				 */
+				rowFetchStart = rowFetchEnd + 1;
+				rowFetchEnd = rowFetchEnd + numOfChunks;
 
-			double lambda = 0.;
-			for (int counter = 0; counter < RANGE_LAMBDA_VAL; counter++) {
+				// This gives the training set
+				fillTrainData(mtTrainingData, mtTrainingOpVal, trainDataCV, trainOutputCV, 
+						rowFetchStart, index);
+
+				DataTrainAndTest dataTT = new DataTrainAndTest(cols);
 
 				try {
 					// Compute Training data MSE
-					MSETrainingSet[index][counter] = dataTT.computeTrainDataMSE(trainData, trainOutput,
+					MSETrainingSet[index] = dataTT.computeTrainDataMSE(trainDataCV, trainOutputCV, 
 							(rows - numOfChunks), cols, lambda);
 
 					/*
 					 * Predict the output values on testdata. Compare it with
 					 * actual value in testdata. Calculate MSE on testdata
 					 */
-					MSETestingSet[index][counter] = dataTT.computeTestDataMSE(testData, testOutput, numOfChunks);
+					MSETestingSet[index] = dataTT.computeTestDataMSE(testDataCV, testOutputCV, 
+							numOfChunks);
+
+					CV_lambda[counter] += MSETestingSet[index];
 
 				} catch (RuntimeException e) {
 					/*
 					 * To handle the case where inverse cannot be found i.e.
 					 * Matrix is singular. set MSETrainingSet and MSETestingSet
 					 * to -1 in this case
+					 * NOTE : Happens when lambda is set to 0.
 					 */
-					// e.printStackTrace();
-					MSETrainingSet[index][counter] = -1.;
-					MSETestingSet[index][counter] = -1.;
+					System.out.println("Inverse cannot be computed for lambda" + counter + "at foldVal" + index);
+					e.printStackTrace();
 				}
-				lambda = lambda + 1;
 			}
+			
+			/*Compute the average performance of lambda */
+			CV_lambda[counter] = CV_lambda[counter] / foldVal;
+			
+			/*Proceed to compute CV for next lambda value*/
+			lambda = lambda + 1;
 		}
 
+		/* Pick the value of lambda with the best average performance*/
+		double bestLambdaWithMinErr[] = new double[2];
+		bestLambdaWithMinErr = findMinValueWithIndex(CV_lambda);
+		
+		/*Write the results to the text file*/
 		WriteToFile objwtof = new WriteToFile();
-		double min_index[] = new double[2];
-		for (int inc = 0; (inc < foldVal); inc++) {
-			min_index = findMinValue(MSETrainingSet[inc]);
-			System.out.println(inc + " " + min_index[0] + " " + min_index[1]);
-			min_index = findMinValue(MSETestingSet[inc]);
-			System.out.println(inc + " " + min_index[0] + " " + min_index[1]);
-			objwtof.writeMSEToRFile("CV_", Integer.toString(inc), MSETrainingSet[inc], MSETestingSet[inc]);
-		}
-		
-		
-		
+		objwtof.writeCVResToTxtFile(ipFname, foldVal, 1, CV_lambda,bestLambdaWithMinErr);
 	}
 
 	/*
 	 * Rest is the training set Fill in the trainData Matrix leaving the
 	 * testData Similarly Fill in the trainOutput Matrix leaving the testOutput
 	 */
-	private void fillTrainData(Matrix mtFeaturesData, Matrix mtOutputValue, Matrix trainData, Matrix trainOutput,
+	private void fillTrainData(Matrix mtTrainData, Matrix mtTrainOpValue, Matrix trainDataCV, Matrix trainOutputCV,
 			int rowFetchStart, int index) {
 
 		// Case1 - Beginning
 		// 100 rows 0-19 is given to testData
 		// give 20-99 to trainData
 		if (index == 0) {
-			trainData = mtFeaturesData.getMatrix(rowFetchStart, (rows - 1), 0, (cols - 1));
-			trainOutput = mtOutputValue.getMatrix(rowFetchStart, (rows - 1), 0, 0);
+			trainDataCV = mtTrainData.getMatrix(rowFetchStart, (rows - 1), 0, (cols - 1));
+			trainOutputCV = mtTrainOpValue.getMatrix(rowFetchStart, (rows - 1), 0, 0);
 		}
 		// Case2 - Ending
 		// 100 rows 80-99 is given to testData
 		// give 0-79 to trainData
 		else if (index == (foldVal - 1)) {
-			trainData = mtFeaturesData.getMatrix(0, (rowFetchStart - 1), 0, (cols - 1));
-			trainOutput = mtOutputValue.getMatrix(0, (rowFetchStart - 1), 0, 0);
+			trainDataCV = mtTrainData.getMatrix(0, (rowFetchStart - 1), 0, (cols - 1));
+			trainOutputCV = mtTrainOpValue.getMatrix(0, (rowFetchStart - 1), 0, 0);
 		}
 		// Case3 - Middle
 		// 100 rows 20-39 is given to testData
@@ -128,27 +137,32 @@ public class CrossValidation {
 			/* fetch 0 to (index*numOfChunks - 1) */
 			for (int num = 0; num < (index * numOfChunks); num++) {
 				/* Fill trainData */
-				Matrix temp = mtFeaturesData.getMatrix(num, num, 0, (cols - 1));
-				trainData.setMatrix(num, num, 0, (cols - 1), temp);
+				Matrix temp = mtTrainData.getMatrix(num, num, 0, (cols - 1));
+				trainDataCV.setMatrix(num, num, 0, (cols - 1), temp);
 				/* Fill trainOutput */
-				Matrix temp1 = mtOutputValue.getMatrix(num, num, 0, 0);
-				trainOutput.setMatrix(num, num, 0, 0, temp1);
+				Matrix temp1 = mtTrainOpValue.getMatrix(num, num, 0, 0);
+				trainOutputCV.setMatrix(num, num, 0, 0, temp1);
 			}
 
 			/* fetch (index*numOfChunks + numOfChunks) to (rows - 1) */
 			for (int num = (index * numOfChunks + numOfChunks); num < rows; num++) {
 				/* Fill trainData */
-				Matrix temp = mtFeaturesData.getMatrix(num, num, 0, (cols - 1));
-				trainData.setMatrix((num - numOfChunks), (num - numOfChunks), 0, (cols - 1), temp);
+				Matrix temp = mtTrainData.getMatrix(num, num, 0, (cols - 1));
+				trainDataCV.setMatrix((num - numOfChunks), (num - numOfChunks), 0, (cols - 1), temp);
 				/* Fill trainOutput */
-				Matrix temp1 = mtOutputValue.getMatrix(num, num, 0, 0);
-				trainOutput.setMatrix((num - numOfChunks), (num - numOfChunks), 0, 0, temp1);
+				Matrix temp1 = mtTrainOpValue.getMatrix(num, num, 0, 0);
+				trainOutputCV.setMatrix((num - numOfChunks), (num - numOfChunks), 0, 0, temp1);
 			}
 		}
 
 	}
 
-	public static double[] findMinValue(double[] array) {
+	/* Function To find the minimum value in an array
+	 * GIVEN: an input array of type double
+	 * RETURN : an array of type double containing 2 elements. First one is
+	 *  indicating minimum Value and next element is index of minimum value 
+	 *  in input array*/
+	public static double[] findMinValueWithIndex(double[] array) {
 		/* To return MinValue and Index corresponding to MinValue */
 		double min_index[] = new double[2];
 

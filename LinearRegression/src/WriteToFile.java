@@ -198,4 +198,60 @@ public class WriteToFile {
 
 		}
 	}
+	
+
+	/*Write CV results in a Text file (i.e.) Best lambda value chosen is written
+	 *  with its corresponding E_out Val*/
+	public void writeCVResToTxtFile(String fname, int foldVal, double lambdaBeginVal,
+			double dCVlambda[], double bestLambdaWithMinErr[]) {
+		PrintStream printstr = null;
+		File file;
+
+		try {
+
+			String temp1 = fname;
+			if (fname.startsWith("./")) {
+				temp1 = fname.substring(2, fname.lastIndexOf('.'));
+			}
+			String temp2 = Integer.toString(foldVal);
+
+			String opFileName = "./CVResult_".concat(temp1).concat("_FoldVal_").concat(temp2).concat(".txt");
+
+			file = new File(opFileName);
+			// if file does not exists, then create it
+			if (!file.exists()) {
+				file.createNewFile();
+			}
+
+			printstr = new PrintStream(file);
+
+			DecimalFormat decFormat = new DecimalFormat("#.######");
+
+			printstr.println("lambdaValuesChoosen:(" + Double.toString(lambdaBeginVal) + ":" + Double.toString(dCVlambda.length) + ")");
+			printstr.print("E_out Values:(");
+
+			int lambdaVals = dCVlambda.length;
+			for (int index = 0; index < (lambdaVals - 1); index++) {
+				printstr.print(decFormat.format(dCVlambda[index]) + ",");
+			}
+			printstr.print(decFormat.format(dCVlambda[(lambdaVals - 1)]) + ")");
+			printstr.println("");
+
+			printstr.println("Best Lambda:"
+					+ decFormat.format(bestLambdaWithMinErr[1] + lambdaBeginVal) +
+					" E_out Corresponding to it:" + decFormat.format(bestLambdaWithMinErr[0])); 
+
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+
+			if (printstr != null) {
+				printstr.close();
+			}
+
+		}
+	}
+	
+
 }

@@ -1,18 +1,30 @@
 import java.util.Random;
+
 import Jama.*;
 
 public class LinearRegression {
 
 	// main function
 	// provide command line arguments as
-	// filename
-	// splitToken
-	// Number of Rows
-	// Number of Cols
+	// args[0] = training filename
+	// args[1] = splitToken
+	// args[2] = Number of Rows in training file
+	// args[3] = Number of Cols in training file
+	// args[4] = testing filename
+	// args[5] = splitToken
+	// args[6] = Number of Rows in testing file
+	// args[7] = Number of Cols in testing file
+	// args[8] = "Q1" or "Q2" or "Q3"
+	// args[9] = lambda Value for Q2 and foldVal for Q3
 	public static void main(String args[]) {
 
+		if (args.length < 9) {
+			System.out.println("Wrong Number of command line arguments");
+		}
+
 		// Read the training file
-		Read_Parse_InputFile trainingFile = new Read_Parse_InputFile(args[0], args[1], args[2], args[3]);
+		Read_Parse_InputFile trainingFile = new Read_Parse_InputFile(args[0], args[1], 
+				args[2], args[3]);
 
 		int rows = Integer.parseInt(args[2]);
 		int cols = Integer.parseInt(args[3]);
@@ -28,7 +40,8 @@ public class LinearRegression {
 		int rowsTest = Integer.parseInt(args[6]);
 		int colsTest = Integer.parseInt(args[7]);
 
-		Read_Parse_InputFile testingFile = new Read_Parse_InputFile(args[4], args[5], args[6], args[7]);
+		Read_Parse_InputFile testingFile = new Read_Parse_InputFile(args[4], args[5], 
+				args[6], args[7]);
 
 		Matrix mtTestData = new Matrix(rowsTest, colsTest);
 		Matrix mtTestOutputVal = new Matrix(rowsTest, 1);
@@ -37,33 +50,39 @@ public class LinearRegression {
 
 		}
 
+		WriteToFile objwtof = new WriteToFile();
+		
 		/***********************************************************************/
 		/*
 		 * Q1 - Compute MSE for training and test data for lambda 0-150 Compute
 		 * MSE and store weights for training data for a chosen lambda On using
 		 * weights calculated in previous step calculate MSE for testdata
 		 */
-		DataTrainAndTest dataTT = new DataTrainAndTest(cols);
-		double MSETrainingSet[] = new double[151];
-		double MSETestingSet[] = new double[151];
-		double lambda = 0.;
-		for (int index = 0; index <= 150; index++) {
+		if (args.length > 8 && args[8].equalsIgnoreCase("Q1")) {
 
-			// Compute Training data MSE
-			MSETrainingSet[index] = dataTT.computeTrainDataMSE(mtTrainData, mtOutputVal, rows, cols, lambda);
+			DataTrainAndTest dataTT = new DataTrainAndTest(cols);
+			double MSETrainingSet[] = new double[151];
+			double MSETestingSet[] = new double[151];
+			double lambda = 0.;
+			for (int index = 0; index <= 150; index++) {
 
-			/*
-			 * Predict the output values on testdata. Compare it with actual
-			 * value in testdata. Calculate MSE on testdata
-			 */
-			MSETestingSet[index] = dataTT.computeTestDataMSE(mtTestData, mtTestOutputVal, rowsTest);
+				// Compute Training data MSE
+				MSETrainingSet[index] = dataTT.computeTrainDataMSE(mtTrainData, mtOutputVal, 
+						rows, cols, lambda);
 
-			lambda = lambda + 1;
+				/*
+				 * Predict the output values on testdata. Compare it with actual
+				 * value in testdata. Calculate MSE on testdata
+				 */
+				MSETestingSet[index] = dataTT.computeTestDataMSE(mtTestData, mtTestOutputVal, 
+						rowsTest);
+
+				lambda = lambda + 1;
+			}
+
+			/* Write the results to R file to plot the graph */
+			objwtof.writeMSEToRFile(args[0], args[4], MSETrainingSet, MSETestingSet);
 		}
-
-		/* Write the results to R file to plot the graph */
-		WriteToFile objwtof = new WriteToFile();
-		objwtof.writeMSEToRFile(args[0], args[4], MSETrainingSet, MSETestingSet);
 
 		/***********************************************************************/
 		// Q2 - Plot Learning Curve
@@ -99,14 +118,16 @@ public class LinearRegression {
 				double train_sum = 0.;
 				double test_sum = 0.;
 				DataTrainAndTest obj = new DataTrainAndTest(inputCols);
-				
+
 				/* To store the extracted Rows */
 				Matrix mtTrainSampleData = new Matrix(inputRows, inputCols);
 				Matrix mtTrainSampleOpVal = new Matrix(inputRows, 1);
-				
-				/* This loop is used for Smoothing
-				 * for the inputRows fixed in outer loop, run on that data size 
-				 * for 10 times by sampling on Training data*/
+
+				/*
+				 * This loop is used for Smoothing for the inputRows fixed in
+				 * outer loop, run on that data size for 10 times by sampling on
+				 * Training data
+				 */
 				for (int index = 0; index < NUM_TO_SMOOTH; index++) {
 					/* Generate random number such that (1000 - inputRows) */
 					int inputStart = randomGenerator.nextInt(rows - inputRows);
@@ -119,10 +140,14 @@ public class LinearRegression {
 					}
 
 					/* Fill in the data from mtTrainData and mtOutputVal */
-					mtTrainSampleData = mtTrainData.getMatrix(inputStart, (inputStart + inputRows), 0, (inputCols - 1));
-					mtTrainSampleOpVal = mtOutputVal.getMatrix(inputStart, (inputStart + inputRows), 0, 0);
+					mtTrainSampleData = mtTrainData.getMatrix(inputStart, (inputStart + inputRows),
+							0, (inputCols - 1));
+					mtTrainSampleOpVal = mtOutputVal.getMatrix(inputStart, (inputStart + inputRows),
+							0, 0);
 
-					train_sum += obj.computeTrainDataMSE(mtTrainSampleData, mtTrainSampleOpVal, inputRows, inputCols, lambdaFixed);
+					train_sum += obj.computeTrainDataMSE(mtTrainSampleData, mtTrainSampleOpVal, 
+							inputRows, inputCols,
+							lambdaFixed);
 					test_sum += obj.computeTestDataMSE(mtTestData, mtTestOutputVal, rowsTest);
 
 				}
@@ -130,7 +155,7 @@ public class LinearRegression {
 				MSETestLC[loop] = test_sum / NUM_TO_SMOOTH;
 				inputRows = inputRows + INCREASE_INPUT_DATA;
 			}
-			/* Write the output to R file to plot the Learning curve*/
+			/* Write the output to R file to plot the Learning curve */
 			objwtof.writeLearingCurveRFile(args[0], lambdaFixed, MSETrainLC, MSETestLC);
 		}
 
@@ -145,7 +170,7 @@ public class LinearRegression {
 				foldVal = Integer.parseInt(args[9]);
 			}
 			CrossValidation cv = new CrossValidation(rows, cols, foldVal);
-			cv.splitDataToKFolds(mtTrainData, mtOutputVal);
+			cv.splitDataToKFolds(mtTrainData, mtOutputVal, args[0]);
 		}
 	}
 }
