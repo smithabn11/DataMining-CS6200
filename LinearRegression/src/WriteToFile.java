@@ -181,11 +181,11 @@ public class WriteToFile {
 			}
 
 			printstr.println("");
-			printstr.println("plot(dataSize,traindata,type=\"l\",col=\"red\"," + "ylab=\"Ein\"," + "ylim=c(" + decFormat.format(ylimMin) + ","
+			printstr.println("plot(dataSize,traindata,type=\"l\",col=\"red\"," + "ylab=\"Expected Error\"," + "ylim=c(" + decFormat.format(ylimMin) + ","
 					+ decFormat.format(ylimMax) + "))");
 			printstr.println("par(new=TRUE)");
 			printstr.println("plot(dataSize,testdata,type=\"l\",col=\"blue\","
-					+ "ylab=\"Eout\",sub=\"Red=Training Blue=Test\"," + "ylim=c(" + decFormat.format(ylimMin) + ","
+					+ "ylab=\"Expected Error\",sub=\"Red=Training Blue=Test\"," + "ylim=c(" + decFormat.format(ylimMin) + ","
 					+ decFormat.format(ylimMax) + "))");
 
 		} catch (IOException e) {

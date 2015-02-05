@@ -28,7 +28,7 @@ public class CrossValidation {
 		Matrix trainOutputCV = new Matrix(rows - numOfChunks, 1);
 
 		/* Get best lambda out of this */
-		int RANGE_LAMBDA_VAL = 10;
+		int RANGE_LAMBDA_VAL = 150;
 		
 		double MSETrainingSet[] = new double[foldVal];
 		double MSETestingSet[] = new double[foldVal];
