@@ -1,3 +1,6 @@
+/*Main Function for LinearRegression
+ * Author: Smitha BN*/
+import java.io.FileNotFoundException;
 import java.util.Random;
 
 import Jama.*;
@@ -14,41 +17,10 @@ public class LinearRegression {
 	// args[5] = splitToken
 	// args[6] = Number of Rows in testing file
 	// args[7] = Number of Cols in testing file
-	// args[8] = "Q1" or "Q2" or "Q3"
-	// args[9] = lambda Value for Q2 and foldVal for Q3
+	// args[8] = "Q1" or "Q2"
+	// args[9] = lambda Value for Q2 
+	//NOTE: Q3 contains args[0], args[1] and args[2] = "Q3" and args[3] = foldVal
 	public static void main(String args[]) {
-
-		if (args.length < 9) {
-			System.out.println("Wrong Number of command line arguments");
-		}
-
-		// Read the training file
-		Read_Parse_InputFile trainingFile = new Read_Parse_InputFile(args[0], args[1], 
-				args[2], args[3]);
-
-		int rows = Integer.parseInt(args[2]);
-		int cols = Integer.parseInt(args[3]);
-		Matrix mtTrainData = new Matrix(rows, cols);
-		Matrix mtOutputVal = new Matrix(rows, 1);
-		if (mtTrainData != null && mtOutputVal != null) {
-			trainingFile.readCsvFile(mtTrainData, mtOutputVal);
-
-		}
-
-		/***********************************************************************/
-		// Read the testing file
-		int rowsTest = Integer.parseInt(args[6]);
-		int colsTest = Integer.parseInt(args[7]);
-
-		Read_Parse_InputFile testingFile = new Read_Parse_InputFile(args[4], args[5], 
-				args[6], args[7]);
-
-		Matrix mtTestData = new Matrix(rowsTest, colsTest);
-		Matrix mtTestOutputVal = new Matrix(rowsTest, 1);
-		if (mtTestData != null && mtTestOutputVal != null) {
-			testingFile.readCsvFile(mtTestData, mtTestOutputVal);
-
-		}
 
 		WriteToFile objwtof = new WriteToFile();
 		
@@ -59,7 +31,37 @@ public class LinearRegression {
 		 * weights calculated in previous step calculate MSE for testdata
 		 */
 		if (args.length > 8 && args[8].equalsIgnoreCase("Q1")) {
+			
+			// Read the training file
+			Read_Parse_InputFile trainingFile = new Read_Parse_InputFile(args[0], args[1], 
+					args[2], args[3]);
 
+			int rows = Integer.parseInt(args[2]);
+			int cols = Integer.parseInt(args[3]);
+			Matrix mtTrainData = new Matrix(rows, cols);
+			Matrix mtOutputVal = new Matrix(rows, 1);
+			if (mtTrainData != null && mtOutputVal != null) {
+				trainingFile.readCsvFile(mtTrainData, mtOutputVal);
+
+			}
+
+			/***********************************************************************/
+			// Read the testing file
+			int rowsTest = Integer.parseInt(args[6]);
+			int colsTest = Integer.parseInt(args[7]);
+
+			Read_Parse_InputFile testingFile = new Read_Parse_InputFile(args[4], args[5], 
+					args[6], args[7]);
+
+			Matrix mtTestData = new Matrix(rowsTest, colsTest);
+			Matrix mtTestOutputVal = new Matrix(rowsTest, 1);
+			if (mtTestData != null && mtTestOutputVal != null) {
+				testingFile.readCsvFile(mtTestData, mtTestOutputVal);
+
+			}
+			
+			/***********************************************************************/
+			// Compute Train and Test MSE
 			DataTrainAndTest dataTT = new DataTrainAndTest(cols);
 			double MSETrainingSet[] = new double[151];
 			double MSETestingSet[] = new double[151];
@@ -79,9 +81,14 @@ public class LinearRegression {
 
 				lambda = lambda + 1;
 			}
-
+			
+			/*To find the Best Lambda and its value*/
+			double arr[] = new double[2];
+			arr = CrossValidation.findMinValueWithIndex(MSETestingSet);
+			
 			/* Write the results to R file to plot the graph */
-			objwtof.writeMSEToRFile(args[0], args[4], MSETrainingSet, MSETestingSet);
+			objwtof.writeMSEToRFile(args[0], args[4], MSETrainingSet, MSETestingSet,arr);
+			
 		}
 
 		/***********************************************************************/
@@ -89,7 +96,37 @@ public class LinearRegression {
 		// args[8] tells to run Q2 if it contains "Q2"
 		// args[9] tells the lambda value (default value is assigned 1)
 		if (args.length > 8 && args[8].equalsIgnoreCase("Q2")) {
+			
+			// Read the training file
+			Read_Parse_InputFile trainingFile = new Read_Parse_InputFile(args[0], args[1], 
+					args[2], args[3]);
 
+			int rows = Integer.parseInt(args[2]);
+			int cols = Integer.parseInt(args[3]);
+			Matrix mtTrainData = new Matrix(rows, cols);
+			Matrix mtOutputVal = new Matrix(rows, 1);
+			if (mtTrainData != null && mtOutputVal != null) {
+				trainingFile.readCsvFile(mtTrainData, mtOutputVal);
+
+			}
+
+			/***********************************************************************/
+			// Read the testing file
+			int rowsTest = Integer.parseInt(args[6]);
+			int colsTest = Integer.parseInt(args[7]);
+
+			Read_Parse_InputFile testingFile = new Read_Parse_InputFile(args[4], args[5], 
+					args[6], args[7]);
+
+			Matrix mtTestData = new Matrix(rowsTest, colsTest);
+			Matrix mtTestOutputVal = new Matrix(rowsTest, 1);
+			if (mtTestData != null && mtTestOutputVal != null) {
+				testingFile.readCsvFile(mtTestData, mtTestOutputVal);
+
+			}
+
+			/***********************************************************************/
+			// Compute the learning curve
 			double lambdaFixed = 1;
 			if (args.length == 10) {
 				lambdaFixed = Double.parseDouble(args[9]);
@@ -157,20 +194,30 @@ public class LinearRegression {
 			}
 			/* Write the output to R file to plot the Learning curve */
 			objwtof.writeLearingCurveRFile(args[0], lambdaFixed, MSETrainLC, MSETestLC);
-		}
 
+		}
+		
 		/***********************************************************************/
 		// Q3 - Cross Validation
-		// args[8] tells to run Q3 if it contains "Q3"
-		// args[9] tells the fold value (default value is assigned 5)
-		if (args.length > 8 && args[8].equalsIgnoreCase("Q3")) {
+		// args[2] tells to run Q3 if it contains "Q3"
+		// args[3] tells the fold value (default value is assigned 5)
+		if (args.length > 3 && args[2].equalsIgnoreCase("Q3")) {
 
 			int foldVal = 5;
-			if (args.length == 10) {
-				foldVal = Integer.parseInt(args[9]);
+			if (args.length == 4) {
+				foldVal = Integer.parseInt(args[3]);
 			}
-			CrossValidation cv = new CrossValidation(rows, cols, foldVal);
-			cv.splitDataToKFolds(mtTrainData, mtOutputVal, args[0]);
+
+			CrossValidation cv = new CrossValidation(args[0],args[1],foldVal);
+			try {
+				cv.splitDataToKFolds();
+			} catch (Exception e) {				
+				e.printStackTrace();
+			}
 		}
+		
+
+
+		 
 	}
 }

@@ -68,6 +68,7 @@ public class DataTrainAndTest {
 		// Calculate 1/N(||Xw - y||) = (1/N)*SumOfAll[(X(i)w - Y(i))square]
 		double dpartialSum = 0.;
 		int inputRows = mtFeaturesData.getRowDimension();
+		
 		// Array starts from 0 Ex. 0:99
 		int inputCols = (mtFeaturesData.getColumnDimension() - 1);
 		for (int index = 0; index < inputRows; index++) {
