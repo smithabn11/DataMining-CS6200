@@ -45,7 +45,8 @@ public class WriteToFile {
 		}
 	}
 
-	public void writeMSEToRFile(String trainfn, String testfn, double dTrainData[], double dTestData[]) {
+	/*Write training data MSE and testing data MSE to R file along with best lambda value found*/
+	public void writeMSEToRFile(String trainfn, String testfn, double dTrainData[], double dTestData[], double bestLambda[]) {
 		PrintStream printstr = null;
 		File file;
 
@@ -108,7 +109,7 @@ public class WriteToFile {
 					+ decFormat.format(ylimMin) + "," + decFormat.format(ylimMax) + "))");
 			printstr.println("par(new=TRUE)");
 			printstr.println("plot(lambda,testdata,type=\"l\",col=\"blue\","
-					+ "ylab=\"MSE\",sub=\"Red=Training Blue=Test\"," + "ylim=c(" + decFormat.format(ylimMin) + ","
+					+ "ylab=\"MSE\",sub=\"Red=Training Blue=Test Best Lambda:"+ bestLambda[1] + "\"," + "ylim=c(" + decFormat.format(ylimMin) + ","
 					+ decFormat.format(ylimMax) + "))");
 
 		} catch (IOException e) {

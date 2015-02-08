@@ -15,9 +15,9 @@ public class SplitCsvFile {
 	 * splitFile.splitCsvFile("./train-1000-100.csv",
 	 * "./50(1000)_100_train.csv", 50);
 	 * splitFile.splitCsvFile("./train-1000-100.csv",
-	 * "./100(1000)_100_train.csv", 50);
+	 * "./100(1000)_100_train.csv", 100);
 	 * splitFile.splitCsvFile("./train-1000-100.csv",
-	 * "./150(1000)_100_train.csv", 50); } catch (FileNotFoundException e) {
+	 * "./150(1000)_100_train.csv", 150); } catch (FileNotFoundException e) {
 	 *  catch block e.printStackTrace(); }
 	 */
 	public void splitCsvFile(String ipfilename, String opfilename, int linesToWrite) throws FileNotFoundException {

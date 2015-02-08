@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
 
 import Jama.*;
 
@@ -19,6 +20,13 @@ public class Read_Parse_InputFile {
 		splitToken = _splitToken;
 		rowsOfData = Integer.parseInt(_rowsOfData);
 		numFeatures = Integer.parseInt(_numFeatures);
+	}
+	
+	Read_Parse_InputFile(String _file, String _splitToken) {
+		file = _file;
+		splitToken = _splitToken;
+		rowsOfData = 0;
+		numFeatures = 0;
 	}
 
 	// read input csv file
@@ -53,6 +61,47 @@ public class Read_Parse_InputFile {
 		} // end of try block
 		catch (NumberFormatException e) {
 			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (bufrdr != null) {
+				try {
+					bufrdr.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	/*Overloaded function.
+	 * Takes List<double[]> to fill the data from csv file*/
+	public void readCsvFile(List<double[]> trainData){
+		BufferedReader bufrdr = null;
+		String line = "";
+		
+		try {
+			bufrdr = new BufferedReader(new FileReader(file));
+			boolean startReading = true;
+
+			while ((line = bufrdr.readLine()) != null) {
+				/* Skip the first line */
+				if (startReading == true) {
+					startReading = false;
+					continue;
+				}
+
+				String tokens[] = line.split(splitToken);
+				double each_row[] = new double[tokens.length];
+
+				for (int i = 0; i < tokens.length; ++i) {
+					each_row[i] = Double.parseDouble(tokens[i]);
+
+				}
+				trainData.add(each_row);
+			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
